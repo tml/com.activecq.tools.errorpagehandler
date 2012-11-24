@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workspaceFilter vesion="1.0">
+	<filter root="/apps/vendors/activecq/tools/errorpagehandler" />
+    <filter root="/apps/vendors/activecq/install" />
+	<filter root="/apps/sling/servlet/errorhandler" />
+</workspaceFilter>

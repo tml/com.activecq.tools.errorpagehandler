@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metatype:MetaData xmlns:metatype="http://www.osgi.org/xmlns/metatype/v1.0.0" localization="OSGI-INF/metatype/metatype">
+    <OCD id="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl" name="ActiveCQ - Error Page Handler" description="Handles the resolution of the proper Error pages to display.">
+        <AD id="prop.enabled" type="Boolean" default="true" name="Enable" description="Enables/Disables the error handler. [Required]"/>
+        <AD id="prop.search.depth-min" type="Integer" default="3" name="Minimum search depth" description="The search for an appropriate error page will traverse UP the tree, stopping at each level and performing a search on every node equal to or greater than the 'current' depth. This setting prevents the lookup from performing too broad of a search. If sites are defined in the following structure '/content/site/en' the appropriate value would be: 3 [Optional] [Default: 3]"/>
+        <AD id="prop.error-page.extension" type="String" default="html" name="Error page extension" description="Examples: html, htm, xml, json. [Optional] [Default: html]"/>
+        <AD id="prop.error-page.default-path" type="String" default="" name="Default error page path" description="Absolute path to Error page resource to serve if no error pages can be found. Does not include extension. [Optional... but highly recommended]"/>
+        <AD id="prop.search.paths" type="String" name="Search paths" description="The search will only look at candidate error pages (including Default error page name) if their paths start with the path prefixes here. Example: All error pages to live at or below a site locale folder 'errors': /content/site/en/errors. [Optional] [Default: /content]" cardinality="2147483647"/>
+        <AD id="prop.error-page.default-node-name" type="String" default="error" name="Default error page name" description="Page name to look for if no specific error page (404, 500, Throwable, etc.) can be found. [Optional... but highly recommended] [Default: error]"/>
+    </OCD>
+    <Designate pid="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl">
+        <Object ocdref="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl"/>
+    </Designate>
+</metatype:MetaData>

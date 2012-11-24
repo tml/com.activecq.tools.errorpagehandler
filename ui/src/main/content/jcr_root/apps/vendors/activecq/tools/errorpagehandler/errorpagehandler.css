@@ -1,0 +1,75 @@
+#acq-eph {
+    background-color: white;
+    color: #000;
+    font-family: Arial, sans-serif;
+    margin: 2em auto;
+    padding: 2em;
+    width: 80%;
+}
+
+#acq-eph h2 {
+    color: black;
+    border-bottom: solid 1px black;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1.5em;
+}
+
+#acq-eph .acq-eph-message h2 {
+    color: white;
+    border-bottom-color: white;
+}
+
+#acq-eph .acq-eph-message p {
+    color: white;
+    margin-bottom: 1em;
+}
+
+#acq-eph .acq-eph-message {
+    background-color: rgb(175, 0, 0);
+    border: solid 5px rgb(150, 0, 0);
+    color: #fff;
+    font-size: 1.25em;
+    margin-bottom: 2em;
+    padding: 1em 2em;
+}
+
+
+#acq-eph .acq-eph-toggle {
+    border: solid 2px #ccc;
+    display: inline-block;
+    width: 100px;
+    text-align: center;
+    background-color: #eee;
+    color: #666;
+    padding: .5em;
+    font-weight: bold;
+}
+
+#acq-eph pre {
+    display: block;
+    white-space: pre-wrap;
+    white-space: -moz-pre-wrap;
+    white-space: -pre-wrap;
+    white-space: -o-pre-wrap;
+    word-wrap: break-word;
+}
+
+#acq-eph hr {
+    background-color: #000;
+    border: 1px 0 0 0;
+}
+
+#acq-eph .acq-eph-collapsed {
+    height: 20em;
+    overflow-y: hidden;
+}
+
+#acq-eph .acq-eph-expanded {
+    height: auto;
+    overflow-y: auto;
+}
+
+#acq-eph .acq-eph-section {
+    margin-bottom: 2em;
+}
