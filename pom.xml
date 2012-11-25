@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <name>ActiveCQ - Error Page Handler</name>
-    <description>Adobe CQ 5.x Project for Error Handler</description>
+    <description>Adobe CQ5 Error Page Handler implementation which allows Authors to create Error pages within Adobe CQ using the standard WCM Page authoring interface. Error pages can be customized for specific Error status codes, Exception types, a Default error pages for content trees, and also a global Defaul error page.</description>
     <groupId>com.activecq.tools.errorpagehandler</groupId>
     <artifactId>parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
@@ -19,7 +19,7 @@
         <project.ui.basedir>${project.parent.basedir}/ui</project.ui.basedir>
         <project.core.basedir>${project.parent.basedir}/core</project.core.basedir>
 
-        <vault.targetURL>http://localhost:5502/crx/packmgr/service.jsp</vault.targetURL>
+        <vault.targetURL>http://localhost:4502/crx/packmgr/service.jsp</vault.targetURL>
         <vault.userId>admin</vault.userId>
         <vault.password>admin</vault.password>
 
@@ -86,108 +86,133 @@
                 <groupId>org.apache.felix</groupId>
                 <artifactId>org.osgi.core</artifactId>
                 <version>1.2.0</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>1.6.4</version>
-                <type>jar</type>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>org.apache.sling.commons.log</artifactId>
+                <version>3.0.0</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.api</artifactId>
                 <version>2.2.4</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>org.apache.felix.scr.annotations</artifactId>
                 <version>1.6.0</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.day.cq</groupId>
                 <artifactId>cq-search</artifactId>
                 <version>5.5.4</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>javax.jcr</groupId>
                 <artifactId>jcr</artifactId>
                 <version>2.0</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.day.cq.wcm</groupId>
                 <artifactId>cq-wcm-api</artifactId>
                 <version>5.5.0</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>servlet-api</artifactId>
                 <version>2.5</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>commons-lang</groupId>
                 <artifactId>commons-lang</artifactId>
                 <version>2.5</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>commons-collections</groupId>
                 <artifactId>commons-collections</artifactId>
                 <version>3.2.1</version>
-                <type>jar</type>
+                <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>org.osgi</groupId>
                 <artifactId>org.osgi.compendium</artifactId>
                 <version>4.2.0</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.commons.osgi</artifactId>
                 <version>2.1.0</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.engine</artifactId>
                 <version>2.0.6</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>org.apache.sling.scripting.jsp.taglib</artifactId>
                 <version>2.1.8</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.day.cq.wcm</groupId>
                 <artifactId>cq-wcm-taglib</artifactId>
                 <version>5.5.0</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.adobe.granite</groupId>
                 <artifactId>com.adobe.granite.xssprotection</artifactId>
                 <version>5.5.14</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
                 <artifactId>jstl</artifactId>
                 <version>1.2</version>
-                <type>jar</type>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>com.day.cq.wcm</groupId>
                 <artifactId>cq-wcm-commons</artifactId>
                 <version>5.5.2</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.day.cq</groupId>
+                <artifactId>cq-commons</artifactId>
+                <version>5.5.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.day.cq.dam</groupId>
+                <artifactId>cq-dam-api</artifactId>
+                <version>5.5.0</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.activecq.api</groupId>
+                <artifactId>core</artifactId>
+                <version>2.0.0</version>
                 <type>jar</type>
             </dependency>
         </dependencies>

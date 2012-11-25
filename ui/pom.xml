@@ -94,6 +94,7 @@
                 <executions>
                     <execution>
                         <goals>
+                            <goal>package</goal>
                             <goal>install</goal>
                         </goals>
                     </execution>

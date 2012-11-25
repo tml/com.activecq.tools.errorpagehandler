@@ -94,10 +94,16 @@
 
                         <Sling-Test-Regexp>.*Test</Sling-Test-Regexp>
 
+                        <Embed-Dependency>*;scope=compile|runtime</Embed-Dependency>
                         <Embed-Directory>target/dependency</Embed-Directory>
                         <Embed-StripGroup>true</Embed-StripGroup>
 
+                        <Import-Package>
+                            !org.apache.commons.codec.binary.*,*
+                        </Import-Package>
+
                         <Export-Package>
+                            !${project.groupId}.impl.*,
                             ${project.groupId}.*;version=${project.version}
                         </Export-Package>
                     </instructions>
@@ -110,12 +116,21 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.activecq.api</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.osgi.core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.commons.log</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
@@ -161,5 +176,32 @@
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.engine</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.day.cq</groupId>
+            <artifactId>cq-commons</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.day.cq.dam</groupId>
+            <artifactId>cq-dam-api</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.0</version>
+            <scope>test</scope>
+            <type>jar</type>
+        </dependency>
+
+
     </dependencies>
 </project>
