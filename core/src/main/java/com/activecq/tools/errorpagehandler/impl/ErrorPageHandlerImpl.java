@@ -4,6 +4,7 @@
  */
 package com.activecq.tools.errorpagehandler.impl;
 
+import com.activecq.api.utils.OsgiPropertyUtil;
 import com.activecq.tools.errorpagehandler.ErrorPageHandlerService;
 import com.day.cq.commons.PathInfo;
 import com.day.cq.search.PredicateGroup;
@@ -13,11 +14,15 @@ import com.day.cq.search.result.SearchResult;
 import com.day.cq.wcm.api.WCMMode;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -32,6 +37,7 @@ import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestProgressTracker;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.engine.auth.Authenticator;
 import org.apache.sling.engine.auth.NoAuthenticationHandlerException;
@@ -39,6 +45,10 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ *
+ * @author david
+ */
 @Component(label = "ActiveCQ - Error Page Handler",
 description = "Handles the resolution of the proper Error pages to display.",
 immediate = false,
@@ -51,10 +61,13 @@ metatype = true)
 @Service
 public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
 
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(ErrorPageHandlerImpl.class);
+
     private static final String USER_AGENT = "User-Agent";
     private static final String MOZILLA = "Mozilla";
     private static final String OPERA = "Opera";
+    public static final String DEFAULT_ERROR_PAGE_NAME = "errors";
 
     /* Enable/Disable */
     private static final boolean DEFAULT_ENABLED = true;
@@ -63,14 +76,6 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     description = "Enables/Disables the error handler. [Required]",
     boolValue = DEFAULT_ENABLED)
     private static final String PROP_ENABLED = "prop.enabled";
-
-    /* Minimum Search Depth */
-    private static final int DEFAULT_MIN_SEARCH_DEPTH = 3;
-    private int minSearchDepth = DEFAULT_MIN_SEARCH_DEPTH;
-    @Property(label = "Minimum search depth",
-    description = "The search for an appropriate error page will traverse UP the tree, stopping at each level and performing a search on every node equal to or greater than the 'current' depth. This setting prevents the lookup from performing too broad of a search. If sites are defined in the following structure '/content/site/en' the appropriate value would be: 3 [Optional] [Default: 3]",
-    intValue = DEFAULT_MIN_SEARCH_DEPTH)
-    private static final String PROP_MINS_SEARCH_DEPTH = "prop.search.depth-min";
 
     /* Error Page Extenstion */
     private static final String DEFAULT_ERROR_PAGE_EXTENSION = "html";
@@ -81,28 +86,20 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     private static final String PROP_ERROR_PAGE_EXTENSION = "prop.error-page.extension";
 
     /* Default Error Page Path */
-    private static final String DEFAULT_ERROR_PAGE_PATH_DEFAULT = "";
-    private String defaultErrorPagePath = DEFAULT_ERROR_PAGE_PATH_DEFAULT;
-    @Property(label = "Default error page path",
-    description = "Absolute path to Error page resource to serve if no error pages can be found. Does not include extension. [Optional... but highly recommended]",
-    value = DEFAULT_ERROR_PAGE_PATH_DEFAULT)
-    private static final String PROP_ERROR_PAGE_PATH = "prop.error-page.default-path";
+    private static final String DEFAULT_SYSTEM_ERROR_PAGE_PATH_DEFAULT = "";
+    private String systemErrorPagePath = DEFAULT_SYSTEM_ERROR_PAGE_PATH_DEFAULT;
+    @Property(label = "Default system error page path",
+    description = "Absolute path to system Error page resource to serve if no other more appropriate error pages can be found. Does not include extension. [Optional... but highly recommended]",
+    value = DEFAULT_SYSTEM_ERROR_PAGE_PATH_DEFAULT)
+    private static final String PROP_ERROR_PAGE_PATH = "prop.error-page.system-path";
 
     /* Search Paths */
-    private static final String[] DEFAULT_SEARCH_PATHS = {"/content"};
+    private static final String[] DEFAULT_SEARCH_PATHS = {};
     private String[] searchPaths = DEFAULT_SEARCH_PATHS;
     @Property(label = "Search paths",
-    description = "The search will only look at candidate error pages (including Default error page name) if their paths start with the path prefixes here. Example: All error pages to live at or below a site locale folder 'errors': /content/site/en/errors. [Optional] [Default: /content]",
+    description = "List of valid inclusive content trees under which error pages may reside, along with the name of the the default error page for the content tree. Example: /content/geometrixx/en:errors [Optional]",
     cardinality = Integer.MAX_VALUE)
     private static final String PROP_SEARCH_PATHS = "prop.search.paths";
-
-    /* Default Error Page Node Name */
-    private static final String DEFAULT_ERROR_PAGE_NAME_DEFAULT = "error";
-    private String defaultErrorPageName = DEFAULT_ERROR_PAGE_NAME_DEFAULT;
-    @Property(label = "Default error page name",
-    description = "Page name to look for if no specific error page (404, 500, Throwable, etc.) can be found. [Optional... but highly recommended] [Default: error]",
-    value = DEFAULT_ERROR_PAGE_NAME_DEFAULT)
-    private static final String PROP_ERROR_PAGE_NAME = "prop.error-page.default-node-name";
 
     @Reference
     private QueryBuilder queryBuilder;
@@ -110,7 +107,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     @Reference
     private Authenticator authenticator;
 
-    private boolean hasSearchPaths;
+    private SortedMap<String, String> searchPathMap = new TreeMap<String, String>();
 
     /**
      * Find the full path to the most appropriate Error Page
@@ -125,29 +122,43 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
             return null;
         }
 
+        final ResourceResolver resourceResolver = errorResource.getResourceResolver();
         Resource page = null;
         // Get error page name to look for based on the error code/name
         final String pageName = getErrorPageName(request);
-        log.debug("Error page name to find: {}", pageName);
+
         // Try to find the closest real parent for the requested resource
         final Resource parent = findFirstRealParent(errorResource);
 
-        if (isValidParent(parent)) {
-            // Search for CQ Page for specific servlet
-            page = searchUp(parent, pageName);
+        if (!this.searchPathMap.isEmpty()) {
+            final String searchPath = this.getSearchPath(parent.getPath());
+            // Search for CQ Page for specific servlet named Page (404, 500, Throwable, etc.)
+            SearchResult result = executeQuery(resourceResolver, pageName);
+            List<Node> nodes = validateNodes(searchPath, IteratorUtils.toList(result.getNodes()));
+
+            for (Node node : nodes) {
+                try {
+                    // Finds the longest search Path this matching page resides under; Null if no searchPaths are matched
+                    log.debug("Node: {}", node.getPath());
+                    page = validateResource(resourceResolver, node);
+                    if(page != null) { break; }
+                } catch (RepositoryException ex) {
+                    // Keep looking; worst case all node access will fail and default error page will be used
+                    continue;
+                }
+            }
 
             if(page == null) {
-                // Search for CQ Page for default error page name
-                log.debug("Could not find [{}] looking for default page: {}", pageName, getDefaultErrorPageName());
-                page = searchUp(parent, getDefaultErrorPageName());
+                if(StringUtils.isNotBlank(searchPath)) {
+                    page = resourceResolver.resolve(searchPath);
+                }
             }
         }
 
-
-        if (page == null) {
+        if (page == null || ResourceUtil.isNonExistingResource(page)) {
             // If no error page could be found
-            if (hasDefaultErrorPage()) {
-                final String errorPage = applyExtenion(getDefaultErrorPagePath());
+            if (hasSystemErrorPage()) {
+                final String errorPage = applyExtenion(getSystemErrorPagePath());
                 log.debug("Using default error page: {}", errorPage);
                 return StringUtils.stripToNull(errorPage);
             }
@@ -159,6 +170,92 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
 
         return null;
     }
+
+
+    /**
+     * Create the query for finding candidate cq:Pages
+     *
+     * @param searchResource
+     * @param pageNames
+     * @return
+     */
+    private SearchResult executeQuery(ResourceResolver resourceResolver, String... pageNames) {
+        Session session = resourceResolver.adaptTo(Session.class);
+
+        Map<String, String> map = new HashMap<String, String>();
+        // Remove slow path filtering
+        map.put("type", "cq:Page");
+
+        if(pageNames.length == 1) {
+            map.put("nodename", escapeNodeName(pageNames[0]));
+        } else if(pageNames.length > 1) {
+            map.put("group.p.or", "true");
+            for(int i = 0; i < pageNames.length; i++) {
+                map.put("group."+String.valueOf(i) + "_nodename", escapeNodeName(pageNames[i]));
+            }
+        }
+
+        final Query query = queryBuilder.createQuery(PredicateGroup.create(map), session);
+        return query.getResult();
+    }
+
+
+    /**
+     * Double check that the candidate CQ Page resource is valid
+     *
+     * @param resourceResolver
+     * @param node
+     * @param searchPath
+     * @return
+     * @throws RepositoryException
+     */
+    private Resource validateResource(ResourceResolver resourceResolver, Node node) throws RepositoryException {
+        // Double check that the resource exists and return it as a match
+        final Resource resource = resourceResolver.getResource(node.getPath());
+
+        if(resource != null && !ResourceUtil.isNonExistingResource(resource)) {
+            return resource;
+        }
+
+        return null;
+    }
+
+    /**
+     * Filter the query results based on the paths
+     *
+     * @param searchResource
+     * @param allNodes
+     * @return
+     */
+    private List<Node> validateNodes(String searchPath, List<Node> allNodes) {
+        List<Node> nodes = new ArrayList<Node>();
+
+        // Filter results by the searchResource path; All valid results' paths should begin
+        // with searchResource.getPath()
+        for(Node node : allNodes) {
+            if(node == null) { continue; }
+            try {
+                // Make sure all query results under or equals to the current Search Resource
+                if(StringUtils.equals(node.getPath(), searchPath) ||
+                    StringUtils.startsWith(node.getPath(), searchPath.concat("/"))) {
+                    nodes.add(node);
+                }
+            } catch(RepositoryException ex) {
+                // Keep looking; worst case all node access will fail and default error page will be used
+                continue;
+            }
+        }
+
+        return nodes;
+    }
+
+
+
+
+
+
+
+
 
     /**
      * Get Error Status Code from Request
@@ -197,22 +294,50 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return enabled;
     }
 
-    public boolean hasDefaultErrorPage() {
-        return StringUtils.isNotBlank(getDefaultErrorPagePath());
+    public boolean hasSystemErrorPage() {
+        return StringUtils.isNotBlank(getSystemErrorPagePath());
     }
 
-    public boolean hasDefaultErrorPageName() {
-        return StringUtils.isNotBlank(getDefaultErrorPageName());
-    }
-
-    @Override
-    public String getDefaultErrorPagePath() {
-        return defaultErrorPagePath;
+    public boolean hasDefaultErrorPagePath(String path) {
+        return StringUtils.isNotBlank(getDefaultErrorPagePath(path));
     }
 
     @Override
-    public String getDefaultErrorPageName() {
-        return defaultErrorPageName;
+    public String getSystemErrorPagePath() {
+        return systemErrorPagePath;
+    }
+
+    @Override
+    public String getDefaultErrorPagePath(String path) {
+        if(this.searchPathMap.containsKey(path)) {
+            return (String) this.searchPathMap.get(path);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Get the sorted Search Paths
+     *
+     * @return
+     */
+    private List<String> getSearchPaths() {
+        return Arrays.asList(this.searchPathMap.keySet().toArray(new String[]{}));
+    }
+
+    /**
+     *
+     * @param path
+     * @return
+     */
+    private String getSearchPath(String path) {
+        for(String searchPath : this.getSearchPaths()) {
+            if(StringUtils.equals(path, searchPath) ||
+                    StringUtils.startsWith(path, searchPath.concat("/"))) {
+                return getDefaultErrorPagePath(searchPath);
+            }
+        }
+        return null;
     }
 
     @Override
@@ -220,70 +345,15 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return StringUtils.stripToEmpty(errorPageExtension);
     }
 
-    private Resource searchUp(Resource searchResource, String pageName) {
-        ResourceResolver resourceResolver = searchResource.getResourceResolver();
-        Resource parent = searchResource.getParent();
 
-        if (isValidParent(searchResource) && !isSearchPathParent(searchResource.getPath())) {
-            return searchUp(parent, pageName);
-        }
 
-        Query query = makeQuery(searchResource, pageName);
-        SearchResult result = query.getResult();
-        List<Node> allNodes = IteratorUtils.toList(result.getNodes());
-        List<Node> nodes = new ArrayList<Node>();
 
-        // Filter results by the searchResource path; All valid results' paths should begin
-        // with searchResource.getPath()
-        for(Node node : allNodes) {
-            if(node == null) { continue; }
-            try {
-                if(StringUtils.startsWith(node.getPath(), searchResource.getPath())) {
-                    nodes.add(node);
-                }
-            } catch(RepositoryException ex) {
-                // Keep looking; worst case all node access will fail and default error page will be used
-                continue;
-            }
-        }
-
-        if(nodes.isEmpty()) {
-            if (isValidParent(parent)) {
-                return searchUp(parent, pageName);
-            }
-        } else {
-            for (Node node : nodes) {
-                try {
-                    if (isUnderSearchPath(node.getPath())) {
-                        return resourceResolver.resolve(node.getPath());
-                    }
-                } catch (RepositoryException ex) {
-                    // Keep looking; worst case all node access will fail and default error page will be used
-                    continue;
-                }
-            }
-
-            if (isValidParent(parent)) {
-                return searchUp(parent, pageName);
-            }
-        }
-
-        return null;
-    }
-
-    private Query makeQuery(Resource searchResource, String errorName) {
-        ResourceResolver resourceResolver = searchResource.getResourceResolver();
-        Session session = resourceResolver.adaptTo(Session.class);
-
-        Map<String, String> map = new HashMap<String, String>();
-        // Remove slow path filtering
-        //map.put("path", searchResource.getPath());
-        map.put("type", "cq:Page");
-        map.put("nodename", escapeNodeName(errorName));
-
-        return queryBuilder.createQuery(PredicateGroup.create(map), session);
-    }
-
+    /**
+     * Given the Request path, find the first Real Parent of the Request (even if the resource doesnt exist)
+     *
+     * @param resource
+     * @return
+     */
     private Resource findFirstRealParent(Resource resource) {
         ResourceResolver resourceResolver = resource.getResourceResolver();
 
@@ -299,7 +369,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
             String[] tmpArray = (String[]) ArrayUtils.subarray(parts, 0, i);
             String tmpStr = "/".concat(StringUtils.join(tmpArray, '/'));
 
-            Resource tmpResource = resourceResolver.getResource(tmpStr);
+            final Resource tmpResource = resourceResolver.getResource(tmpStr);
 
             if (tmpResource != null) {
                 return tmpResource;
@@ -309,6 +379,14 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return null;
     }
 
+    /**
+     * Add extension as configured via OSGi Component Property
+     *
+     * Defaults to .html
+     *
+     * @param path
+     * @return
+     */
     private String applyExtenion(String path) {
         if (path == null) {
             return path;
@@ -322,36 +400,13 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return StringUtils.stripToEmpty(path).concat(".").concat(ext);
     }
 
-    private boolean isValidParent(Resource parent) {
-        if (parent == null) {
-            return false;
-        }
-        if (StringUtils.equals("/", parent.getPath())) {
-            return false;
-        }
 
-        Node parentNode = parent.adaptTo(Node.class);
-        if (parentNode == null) {
-            return false;
-        }
-
-        int parentDepth = StringUtils.split(parent.getPath(), '/').length;
-
-        if (parentDepth < minSearchDepth) {
-            return false;
-        }
-
-        try {
-            if (parentNode.getPrimaryNodeType().isNodeType("rep:root")) {
-                return false;
-            }
-        } catch (Exception ex) {
-            return false;
-        }
-
-        return true;
-    }
-
+    /**
+     * Escapes JCR node names for search; Especially important for nodes that start with numbers
+     *
+     * @param name
+     * @return
+     */
     private String escapeNodeName(String name) {
         name = StringUtils.stripToNull(name);
         if (name == null) {
@@ -374,52 +429,21 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return name;
     }
 
-    private boolean isUnderSearchPath(String path) {
-        if (searchPaths == null) {
-            return true;
-        }
-        if (searchPaths.length < 1) {
-            return true;
-        }
 
-        for (String searchPath : searchPaths) {
-            searchPath = StringUtils.stripToNull(searchPath);
-            if (searchPath == null) {
-                continue;
-            }
-            if (StringUtils.startsWith(path, searchPath)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private boolean isSearchPathParent(String path) {
-        if (searchPaths == null) {
-            return true;
-        }
-        if (searchPaths.length < 1) {
-            return true;
-        }
-
-        for (String searchPath : searchPaths) {
-            searchPath = StringUtils.stripToNull(searchPath);
-            if (searchPath == null) {
-                continue;
-            }
-            if (StringUtils.startsWith(searchPath, path)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
+    /**
+     *
+     * @param request
+     * @return
+     */
     protected boolean isAnonymousRequest(SlingHttpServletRequest request) {
         return (request.getAuthType() == null || request.getRemoteUser() == null);
     }
 
+    /**
+     *
+     * @param request
+     * @return
+     */
     protected boolean isBrowserRequest(SlingHttpServletRequest request) {
         final String userAgent = request.getHeader(USER_AGENT);
         if (StringUtils.isBlank(userAgent)) {
@@ -518,6 +542,11 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return stringWriter.toString();
     }
 
+    /**
+     *
+     * @param request
+     * @return
+     */
     @Override
     public String getRequestProgress(SlingHttpServletRequest request) {
         StringWriter stringWriter = new StringWriter();
@@ -530,6 +559,42 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     }
 
 
+
+    /**
+     * Covert OSGi Property into a SortMap
+     *
+     * @param paths
+     * @return
+     */
+    private SortedMap<String, String> searchPathsToMap(String[] paths) {
+        SortedMap<String, String> sortedMap = new TreeMap<String, String>(new StringLengthComparator());
+
+        for (String path : paths) {
+            SimpleEntry tmp = OsgiPropertyUtil.toSimpleEntry(path, ":");
+
+            String key = StringUtils.strip((String) tmp.getKey());
+            String val = StringUtils.strip((String) tmp.getValue());
+
+            // Only accept absolute paths
+            if(StringUtils.isBlank(key) || !StringUtils.startsWith(key, "/")) { continue; }
+
+            // Validate page name value
+            if(StringUtils.isBlank(val)) {
+                val = key + "/" + DEFAULT_ERROR_PAGE_NAME;
+            } else if(StringUtils.equals(val, ".")) {
+                val = key;
+            } else if(!StringUtils.startsWith(val, "/")) {
+                val = key + "/" + val;
+            }
+
+            sortedMap.put(key, val);
+        }
+
+        return sortedMap;
+    }
+
+    /** OSGi Component Methods **/
+
     protected void activate(ComponentContext componentContext) {
         configure(componentContext);
     }
@@ -541,47 +606,24 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     private void configure(ComponentContext componentContext) {
         Dictionary properties = componentContext.getProperties();
 
-        enabled = PropertiesUtil.toBoolean(properties.get(PROP_ENABLED), DEFAULT_ENABLED);
+        this.enabled = PropertiesUtil.toBoolean(properties.get(PROP_ENABLED), DEFAULT_ENABLED);
 
-        defaultErrorPagePath = PropertiesUtil.toString(properties.get(PROP_ERROR_PAGE_PATH), DEFAULT_ERROR_PAGE_PATH_DEFAULT);
-        defaultErrorPageName = PropertiesUtil.toString(properties.get(PROP_ERROR_PAGE_NAME), DEFAULT_ERROR_PAGE_NAME_DEFAULT);
+        this.systemErrorPagePath = PropertiesUtil.toString(properties.get(PROP_ERROR_PAGE_PATH), DEFAULT_SYSTEM_ERROR_PAGE_PATH_DEFAULT);
 
-        errorPageExtension = PropertiesUtil.toString(properties.get(PROP_ERROR_PAGE_EXTENSION), DEFAULT_ERROR_PAGE_EXTENSION);
+        this.errorPageExtension = PropertiesUtil.toString(properties.get(PROP_ERROR_PAGE_EXTENSION), DEFAULT_ERROR_PAGE_EXTENSION);
 
-        minSearchDepth = PropertiesUtil.toInteger(properties.get(PROP_MINS_SEARCH_DEPTH), DEFAULT_MIN_SEARCH_DEPTH);
-
-        String[] configuredSearchPaths = PropertiesUtil.toStringArray(properties.get(PROP_SEARCH_PATHS), DEFAULT_SEARCH_PATHS);
-        List<String> tmpSearchPaths = new ArrayList<String>();
-
-        for (String sp : configuredSearchPaths) {
-            String tmp = StringUtils.stripToNull(sp);
-
-            if (tmp != null) {
-                tmpSearchPaths.add(tmp);
-            }
-        }
-
-        if (tmpSearchPaths.isEmpty()) {
-            searchPaths = new String[0];
-        } else {
-            searchPaths = tmpSearchPaths.toArray(new String[0]);
-        }
+        this.searchPathMap = searchPathsToMap(PropertiesUtil.toStringArray(properties.get(PROP_SEARCH_PATHS), DEFAULT_SEARCH_PATHS));
 
         /* Debug */
-        log.debug("=======================================");
+        log.debug("=== ActiveCQ Tools - Error Page Handler ===");
 
         log.debug("Enabled: " + isEnabled());
-        log.debug("Default Error Page Path: " + getDefaultErrorPagePath());
-        log.debug("Default Error Page Name: " + getDefaultErrorPageName());
+        log.debug("Default Error Page Path: " + getSystemErrorPagePath());
 
         log.debug("Error Page Extension: " + getErrorPageExtension());
-        log.debug("Minimum Search Depth: " + minSearchDepth);
-        log.debug("Search Path Count: " + searchPaths.length);
 
-        for(String searchPath : searchPaths) {
-            log.debug("Search Path: " + searchPath);
-        }
+        log.debug("Search Path Map: " + searchPathMap.toString());
 
-        log.debug("---------------------------------------");
+        log.debug("-------------------------------------------");
     }
 }

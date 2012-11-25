@@ -22,8 +22,8 @@ public interface ErrorPageHandlerService {
     public String findErrorPage(SlingHttpServletRequest request, Resource errorResource);
     public int getStatusCode(SlingHttpServletRequest request);
     public String getErrorPageName(SlingHttpServletRequest request);
-    public String getDefaultErrorPagePath();
-    public String getDefaultErrorPageName();
+    public String getSystemErrorPagePath();
+    public String getDefaultErrorPagePath(String path);
     public String getErrorPageExtension();
     public boolean isEnabled();
 
