@@ -23,7 +23,7 @@ public interface ErrorPageHandlerService {
     public int getStatusCode(SlingHttpServletRequest request);
     public String getErrorPageName(SlingHttpServletRequest request);
     public String getSystemErrorPagePath();
-    public String getDefaultErrorPagePath(String path);
+    public String getErrorPagesPath(String path);
     public String getErrorPageExtension();
     public boolean isEnabled();
 

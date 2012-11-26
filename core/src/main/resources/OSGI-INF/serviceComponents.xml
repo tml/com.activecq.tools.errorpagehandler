@@ -8,8 +8,9 @@
         <property name="service.vendor" type="String" value="ActiveCQ"/>
         <property name="prop.enabled" type="Boolean" value="true"/>
         <property name="prop.error-page.extension" type="String" value="html"/>
+        <property name="prop.error-page.fallback-name" type="String" value="500"/>
         <property name="prop.error-page.system-path" type="String" value=""/>
-        <property name="prop.search.paths"/>
+        <property name="prop.paths"/>
         <property name="service.pid" value="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl"/>
         <reference name="queryBuilder" interface="com.day.cq.search.QueryBuilder" cardinality="1..1" policy="static" bind="bindQueryBuilder" unbind="unbindQueryBuilder"/>
         <reference name="authenticator" interface="org.apache.sling.engine.auth.Authenticator" cardinality="1..1" policy="static" bind="bindAuthenticator" unbind="unbindAuthenticator"/>
