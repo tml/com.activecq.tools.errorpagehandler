@@ -3,7 +3,7 @@
     <OCD id="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl" name="ActiveCQ - Error Page Handler" description="Handles the resolution of the proper Error pages to display.">
         <AD id="prop.enabled" type="Boolean" default="true" name="Enable" description="Enables/Disables the error handler. [Required]"/>
         <AD id="prop.error-page.extension" type="String" default="html" name="Error page extension" description="Examples: html, htm, xml, json. [Optional] [Default: html]"/>
-        <AD id="prop.error-page.fallback-name" type="String" default="500" name="Fallback Error page name" description="Error page name to use if a valid Error Code/Error Servlet Name cannpt be retrieved from the Request. [Required] [Default: 500]"/>
+        <AD id="prop.error-page.fallback-name" type="String" default="500" name="Fallback error page name" description="Error page name (not path) to use if a valid Error Code/Error Servlet Name cannpt be retrieved from the Request. [Required] [Default: 500]"/>
         <AD id="prop.error-page.system-path" type="String" default="" name="System error page" description="Absolute path to system Error page resource to serve if no other more appropriate error pages can be found. Does not include extension. [Optional... but highly recommended]"/>
         <AD id="prop.paths" type="String" name="Error page paths" description="List of valid inclusive content trees under which error pages may reside, along with the name of the the default error page for the content tree. Example: /content/geometrixx/en:errors [Optional]" cardinality="2147483647"/>
     </OCD>

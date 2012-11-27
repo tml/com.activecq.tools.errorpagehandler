@@ -9,11 +9,6 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <organization>
-        <name>ActiveCQ</name>
-        <url>http://activecq.com</url>
-    </organization>
-
     <properties>
         <project.ui.apps.installdir>/apps/vendors/activecq/install</project.ui.apps.installdir>
         <project.ui.basedir>${project.parent.basedir}/ui</project.ui.basedir>
@@ -26,6 +21,19 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+
+   <organization>
+        <name>ActiveCQ</name>
+        <url>http://activecq.com</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <modules>
         <module>core</module>
