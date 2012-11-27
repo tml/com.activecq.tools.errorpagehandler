@@ -136,7 +136,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         final String pageName = getErrorPageName(request);
 
         // Try to find the closest real parent for the requested resource
-        final Resource parent = findFirstRealParent(errorResource);
+        final Resource parent = findFirstRealParentOrSelf(errorResource);
 
         if (!this.pathMap.isEmpty()) {
             // Get the best-matching Errors Path for this particular Request
@@ -405,8 +405,11 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      * @param resource
      * @return
      */
-    private Resource findFirstRealParent(Resource resource) {
+    private Resource findFirstRealParentOrSelf(Resource resource) {
         ResourceResolver resourceResolver = resource.getResourceResolver();
+        if(resource != null && !ResourceUtil.isNonExistingResource(resource)) {
+            return resource;
+        }
 
         if (resource.getParent() != null) {
             return resource.getParent();
