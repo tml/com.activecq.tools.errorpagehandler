@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * @author david
  */
 @Component(label = "ActiveCQ - Error Page Handler",
-description = "Handles the resolution of the proper Error pages to display.",
+description = "Error Page Handling module which facilitates the resolution of errors against authorable pages for discrete content trees.",
 immediate = false,
 metatype = true)
 @Properties({
@@ -86,11 +86,11 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     value = DEFAULT_ERROR_PAGE_EXTENSION)
     private static final String PROP_ERROR_PAGE_EXTENSION = "prop.error-page.extension";
 
-    /* Fallback Error Code Extenstion */
+    /* Fallback Error Code Extension */
     private static final String DEFAULT_FALLBACK_ERROR_NAME = "500";
     private String fallbackErrorName = DEFAULT_FALLBACK_ERROR_NAME;
     @Property(label = "Fallback error page name",
-    description = "Error page name (not path) to use if a valid Error Code/Error Servlet Name cannpt be retrieved from the Request. [Required] [Default: 500]",
+    description = "Error page name (not path) to use if a valid Error Code/Error Servlet Name cannot be retrieved from the Request. [Required] [Default: 500]",
     value = DEFAULT_FALLBACK_ERROR_NAME)
     private static final String PROP_FALLBACK_ERROR_NAME = "prop.error-page.fallback-name";
 
@@ -104,7 +104,6 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
 
     /* Search Paths */
     private static final String[] DEFAULT_SEARCH_PATHS = {};
-    private String[] paths = DEFAULT_SEARCH_PATHS;
     @Property(label = "Error page paths",
     description = "List of valid inclusive content trees under which error pages may reside, along with the name of the the default error page for the content tree. Example: /content/geometrixx/en:errors [Optional]",
     cardinality = Integer.MAX_VALUE)
@@ -149,12 +148,8 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
 
                 // Return the first existing match
                 for (String errorPath : errorPaths) {
-                    try {
-                        page = getResource(resourceResolver, errorPath);
-                        if(page != null) { break; }
-                    } catch (RepositoryException ex) {
-                        continue;
-                    }
+                    page = getResource(resourceResolver, errorPath);
+                    if(page != null) { break; }
                 }
 
                 // No error-specific page could be found, use the "default" error page
@@ -218,9 +213,8 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      * @param resourceResolver
      * @param path
      * @return
-     * @throws RepositoryException
      */
-    private Resource getResource(ResourceResolver resourceResolver, String path) throws RepositoryException {
+    private Resource getResource(ResourceResolver resourceResolver, String path) {
         // Double check that the resource exists and return it as a match
         final Resource resource = resourceResolver.getResource(path);
 
@@ -255,7 +249,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
                 }
             } catch(RepositoryException ex) {
                 log.warn("Could not get path for node. {}", ex.getMessage());
-                continue;
+                // continue
             }
         }
 
@@ -275,7 +269,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         Integer statusCode = (Integer) request.getAttribute(ErrorPageHandlerService.STATUS_CODE);
 
         if (statusCode != null) {
-            return statusCode.intValue();
+            return statusCode;
         } else {
             return ErrorPageHandlerService.DEFAULT_STATUS_CODE;
         }
@@ -284,10 +278,9 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     @Override
     public String getErrorPageName(SlingHttpServletRequest request) {
         // Get status code from request
-        String statusCode = String.valueOf(getStatusCode(request));
-
         // Set the servlet name ot find to statusCode; update later if needed
-        String servletName = statusCode;
+        String servletName = String.valueOf(getStatusCode(request));
+
         if(StringUtils.isBlank(servletName)) { servletName = this.fallbackErrorName; }
 
         final String servletPath = (String) request.getAttribute(ErrorPageHandlerService.SERVLET_NAME);
@@ -350,7 +343,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      * @return
      */
     private List<String> getRootPaths() {
-        return Arrays.asList(this.pathMap.keySet().toArray(new String[]{}));
+        return Arrays.asList(this.pathMap.keySet().toArray(new String[this.pathMap.size()]));
     }
 
     /**
@@ -362,7 +355,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     @Override
     public String getErrorPagesPath(String rootPath) {
         if(this.pathMap.containsKey(rootPath)) {
-            return (String) this.pathMap.get(rootPath);
+            return this.pathMap.get(rootPath);
         } else {
             return null;
         }
@@ -384,12 +377,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
                 final ResourceResolver resourceResolver = resource.getResourceResolver();
                 final String errorPagePath = getErrorPagesPath(rootPath);
 
-                Resource errorPageResource = null;
-                try {
-                    errorPageResource = getResource(resourceResolver, errorPagePath);
-                } catch (RepositoryException ex) {
-                    java.util.logging.Logger.getLogger(ErrorPageHandlerImpl.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                Resource errorPageResource = getResource(resourceResolver, errorPagePath);
                 if(errorPageResource != null && !ResourceUtil.isNonExistingResource(errorPageResource)) {
                     return errorPageResource.getPath();
                 }
@@ -406,15 +394,18 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      * @return
      */
     private Resource findFirstRealParentOrSelf(Resource resource) {
-        ResourceResolver resourceResolver = resource.getResourceResolver();
         if(resource != null && !ResourceUtil.isNonExistingResource(resource)) {
             return resource;
         }
 
-        if (resource.getParent() != null) {
-            return resource.getParent();
+        try {
+            final Resource parent = resource.getParent();
+            if (parent != null) { return parent; }
+        } catch (NullPointerException ex) {
+            // continue
         }
 
+        ResourceResolver resourceResolver = resource.getResourceResolver();
         String path = resource.getPath();
         PathInfo pathInfo = new PathInfo(path);
         String[] parts = StringUtils.split(pathInfo.getResourcePath(), '/');
@@ -502,10 +493,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      */
     protected boolean isBrowserRequest(SlingHttpServletRequest request) {
         final String userAgent = request.getHeader(USER_AGENT);
-        if (StringUtils.isBlank(userAgent)) {
-            return false;
-        }
-        return (StringUtils.contains(userAgent, MOZILLA) || StringUtils.contains(userAgent, OPERA));
+        return !StringUtils.isBlank(userAgent) && (StringUtils.contains(userAgent, MOZILLA) || StringUtils.contains(userAgent, OPERA));
     }
 
     /**
@@ -608,7 +596,6 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         StringWriter stringWriter = new StringWriter();
         if (request != null) {
             RequestProgressTracker tracker = request.getRequestProgressTracker();
-            PrintWriter printWriter = new PrintWriter(stringWriter);
             tracker.dump(new PrintWriter(stringWriter, true));
         }
         return stringWriter.toString();
