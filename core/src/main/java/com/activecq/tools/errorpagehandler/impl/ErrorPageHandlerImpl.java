@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.activecq.tools.errorpagehandler.impl;
 
 import com.activecq.api.utils.OsgiPropertyUtil;
@@ -66,14 +61,14 @@ import org.slf4j.LoggerFactory;
  *
  * @author david
  */
-@Component(label = "ActiveCQ Tools - Error Page Handler",
-description = "Error Page Handling module which facilitates the resolution of errors against authorable pages for discrete content trees.",
-immediate = false,
-metatype = true)
+@Component(label = "ActiveCQ - Error Page Handler",
+            description = "Error Page Handling module which facilitates the resolution of errors against authorable pages for discrete content trees.",
+            immediate = false,
+            metatype = true)
 @Properties({
     @Property(
         name = "service.vendor",
-    value = "ActiveCQ")
+        value = "ActiveCQ")
 })
 @Service
 public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
