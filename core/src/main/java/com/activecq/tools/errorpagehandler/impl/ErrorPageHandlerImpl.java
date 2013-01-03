@@ -66,7 +66,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author david
  */
-@Component(label = "ActiveCQ - Error Page Handler",
+@Component(label = "ActiveCQ Tools - Error Page Handler",
 description = "Error Page Handling module which facilitates the resolution of errors against authorable pages for discrete content trees.",
 immediate = false,
 metatype = true)
@@ -94,7 +94,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     boolValue = DEFAULT_ENABLED)
     private static final String PROP_ENABLED = "prop.enabled";
 
-    /* Error Page Extention */
+    /* Error Page Extension */
     private static final String DEFAULT_ERROR_PAGE_EXTENSION = "html";
     private String errorPageExtension = DEFAULT_ERROR_PAGE_EXTENSION;
     @Property(label = "Error page extension",
@@ -652,7 +652,11 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         SortedMap<String, String> sortedMap = new TreeMap<String, String>(new StringLengthComparator());
 
         for (String path : paths) {
-            SimpleEntry tmp = OsgiPropertyUtil.toSimpleEntry(path, ":");
+            if(StringUtils.isBlank(path)) { continue; }
+
+            final SimpleEntry tmp = OsgiPropertyUtil.toSimpleEntry(path, ":");
+
+            if(tmp == null) { continue; }
 
             String key = StringUtils.strip((String) tmp.getKey());
             String val = StringUtils.strip((String) tmp.getValue());
