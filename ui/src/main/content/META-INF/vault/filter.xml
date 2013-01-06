@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter vesion="1.0">
 	<filter root="/apps/vendors/activecq/tools/errorpagehandler" />
-    <filter root="/apps/vendors/activecq/install" />
-	<filter root="/apps/sling/servlet/errorhandler" />
+    <filter root="/apps/vendors/activecq/install" >
+        <include pattern="/apps/vendors/activecq/install/com.activecq.tools.errorpagehandler-core.*jar"/>
+    </filter>
+	<filter root="/apps/sling/servlet/errorhandler/404.jsp" />
+    <filter root="/apps/sling/servlet/errorhandler/default.jsp" />
 </workspaceFilter>
