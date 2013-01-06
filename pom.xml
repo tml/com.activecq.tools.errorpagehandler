@@ -6,7 +6,7 @@
     <description>Adobe CQ5 Error Page Handler implementation which allows Authors to create Error pages within Adobe CQ using the standard WCM Page authoring interface. Error pages can be customized for specific Error status codes, Exception types, a Default error pages for content trees, and also a global system wide default error page.</description>
     <groupId>com.activecq.tools.errorpagehandler</groupId>
     <artifactId>parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -39,7 +39,7 @@
         <connection>scm:git:git@github.com-activecq:activecq/com.activecq.tools.errorpagehandler.git</connection>
         <developerConnection>scm:git:git@github.com-activecq:activecq/com.activecq.tools.errorpagehandler.git</developerConnection>
         <url>https://github.com/activecq/com.activecq.tools.errorpagehandler</url>
-      <tag>1.0.0</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <modules>
