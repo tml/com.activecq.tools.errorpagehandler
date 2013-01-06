@@ -35,6 +35,12 @@
         </license>
     </licenses>
 
+    <scm>
+        <connection>scm:git:git@github.com-activecq:activecq/com.activecq.tools.errorpagehandler.git</connection>
+        <developerConnection>scm:git:git@github.com-activecq:activecq/com.activecq.tools.errorpagehandler.git</developerConnection>
+        <url>https://github.com/activecq/com.activecq.tools.errorpagehandler</url>
+    </scm>
+
     <modules>
         <module>core</module>
         <module>ui</module>
