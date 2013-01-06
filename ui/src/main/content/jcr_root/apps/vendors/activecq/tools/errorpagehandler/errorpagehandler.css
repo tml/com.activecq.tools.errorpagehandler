@@ -1,23 +1,53 @@
+body {
+    background-color: #fff;
+    background-image: none;
+    margin: 0;
+    padding: 0;
+}
+
 #acq-eph {
-    background-color: white;
+    background-color: #fff;
     color: #000;
     font-family: Arial, sans-serif;
-    margin: 2em auto;
-    padding: 2em;
+    margin: 0 auto;
     width: 80%;
 }
 
-#acq-eph h2 {
+#acq-eph .acq-eph-body {
+    background-color: #ECECEC;
+    padding: 2em;
+}
+
+#acq-eph h1 {
     color: black;
     border-bottom: solid 1px black;
-    font-size: 24px;
+    font-size: 32px;
     font-weight: bold;
     line-height: 1.5em;
 }
 
-#acq-eph .acq-eph-message h2 {
+#acq-eph h2 {
+    color: black;
+    border-bottom: dashed 1px #CCC;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1.5em;
+    margin-bottom: .72em;
+    padding-bottom: .25em;
+}
+
+#acq-eph .acq-eph-message {
+    background-color: #F92F42;
+    border-bottom: solid 5px #FB515B;
+    color: #fff;
+    font-size: 1.25em;
+    margin: 0;
+    padding: 3em 2em 1em 2em;
+}
+
+#acq-eph .acq-eph-message h1 {
     color: white;
-    border-bottom-color: white;
+    border-bottom-color: #FB515B;
 }
 
 #acq-eph .acq-eph-message p {
@@ -25,25 +55,27 @@
     margin-bottom: 1em;
 }
 
-#acq-eph .acq-eph-message {
-    background-color: rgb(175, 0, 0);
-    border: solid 5px rgb(150, 0, 0);
-    color: #fff;
-    font-size: 1.25em;
-    margin-bottom: 2em;
-    padding: 1em 2em;
+#acq-eph .acq-eph-message a,
+#acq-eph .acq-eph-message a:hover,
+#acq-eph .acq-eph-message a:visited {
+    color: white;
+    font-weight: bold;
+    text-decoration: underline;
 }
-
 
 #acq-eph .acq-eph-toggle {
     border: solid 2px #ccc;
     display: inline-block;
-    width: 100px;
     text-align: center;
-    background-color: #eee;
+    background-color: #f7f7f7;
     color: #666;
-    padding: .5em;
+    padding: .5em 1em;
     font-weight: bold;
+}
+
+#acq-eph .acq-eph-toggle:hover {
+    background-color: #fff;
+    text-decoration: none;
 }
 
 #acq-eph pre {
@@ -61,7 +93,7 @@
 }
 
 #acq-eph .acq-eph-collapsed {
-    height: 20em;
+    height: 240px;
     overflow-y: hidden;
 }
 
