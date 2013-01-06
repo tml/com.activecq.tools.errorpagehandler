@@ -26,8 +26,6 @@ import org.apache.sling.api.resource.Resource;
 public interface ErrorPageHandlerService {
     public static final String STATUS_CODE = "javax.servlet.error.status_code";
     public static final String SERVLET_NAME = "javax.servlet.error.servlet_name";
-    public static final String PAGE_ATTR_EXCEPTION = "com.activecq.tools.errorpagehandler.keys.exception";
-    public static final String PAGE_ATTR_REQUESTPROGRESS = "com.activecq.tools.errorpagehandler.keys.requestprogress";
     public static final int DEFAULT_STATUS_CODE = 500;
 
     public String findErrorPage(SlingHttpServletRequest request, Resource errorResource);
