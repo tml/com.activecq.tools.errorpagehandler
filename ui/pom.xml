@@ -9,7 +9,7 @@
     </parent>
 
     <name>ActiveCQ - Error Page Handler (UI)</name>
-    <description>Adobe CQ Scripts and resources for visual display.</description>
+    <description>Adobe CQ5 Error Page Handler implementation which allows Authors to create Error pages within Adobe CQ using the standard WCM Page authoring interface. Error pages can be customized for specific Error status codes, Exception types, a Default error pages for content trees, and also a global Defaul error page.</description>
     <artifactId>ui</artifactId>
     <packaging>content-package</packaging>
 
@@ -69,7 +69,7 @@
             <plugin>
                 <groupId>com.day.jcr.vault</groupId>
                 <artifactId>content-package-maven-plugin</artifactId>
-                <version>0.0.14</version>
+                <version>0.0.18</version>
                 <extensions>true</extensions>
 
                 <configuration>
@@ -81,7 +81,7 @@
                     <name>${project.groupId}</name>
                     <version>${project.version}</version>
 
-                    <description>${project.parent.description}</description>
+                    <description>${project.description}</description>
 
                     <failOnError>true</failOnError>
                               
