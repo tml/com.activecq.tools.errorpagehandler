@@ -1,5 +1,5 @@
 ;$CQ(function() {
-    $CQ('.acq-eph-toggle').click(function() {
+    $CQ('#acq-eph .acq-eph-toggle').click(function() {
         $this = $CQ(this);
         $section = $this.closest('.acq-eph-section');
 
