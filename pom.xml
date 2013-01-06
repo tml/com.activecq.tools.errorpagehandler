@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <name>ActiveCQ - Error Page Handler</name>
-    <description>Adobe CQ5 Error Page Handler implementation which allows Authors to create Error pages within Adobe CQ using the standard WCM Page authoring interface. Error pages can be customized for specific Error status codes, Exception types, a Default error pages for content trees, and also a global Defaul error page.</description>
+    <description>Adobe CQ5 Error Page Handler implementation which allows Authors to create Error pages within Adobe CQ using the standard WCM Page authoring interface. Error pages can be customized for specific Error status codes, Exception types, a Default error pages for content trees, and also a global system wide default error page.</description>
     <groupId>com.activecq.tools.errorpagehandler</groupId>
     <artifactId>parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
@@ -76,6 +76,11 @@
                 <version>2.1.2</version>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.4</version>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -83,6 +88,11 @@
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>2.3.7</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.4</version>
                 </plugin>
             </plugins>
         </pluginManagement>

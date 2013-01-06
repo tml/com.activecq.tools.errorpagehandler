@@ -9,7 +9,7 @@
     </parent>
 
     <name>ActiveCQ - Error Page Handler (UI)</name>
-    <description>Adobe CQ5 Error Page Handler implementation which allows Authors to create Error pages within Adobe CQ using the standard WCM Page authoring interface. Error pages can be customized for specific Error status codes, Exception types, a Default error pages for content trees, and also a global Defaul error page.</description>
+    <description>Adobe CQ5 Error Page Handler implementation which allows Authors to create Error pages within Adobe CQ using the standard WCM Page authoring interface. Error pages can be customized for specific Error status codes, Exception types, a Default error pages for content trees, and also a global system wide default error page.</description>
     <artifactId>ui</artifactId>
     <packaging>content-package</packaging>
 
