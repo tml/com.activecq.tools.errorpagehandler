@@ -8,13 +8,10 @@ if(errorPageHandlerService != null && errorPageHandlerService.isEnabled()) {
 
     if(status >= 500 && errorPageHandlerService.isAuthorModeRequest(slingRequest)) {
         if(errorPageHandlerService.isAuthorPreviewModeRequest(slingRequest)) {
-            pageContext.setAttribute(ErrorPageHandlerService.PAGE_ATTR_EXCEPTION,
-                    errorPageHandlerService.getException(slingRequest));
-            pageContext.setAttribute(ErrorPageHandlerService.PAGE_ATTR_REQUESTPROGRESS,
-                    errorPageHandlerService.getRequestProgress(slingRequest));
-            %><%@include file="/apps/vendors/activecq/tools/errorpagehandler/errormessage.jsp" %><%
+            %><cq:include script="/apps/vendors/activecq/tools/errorpagehandler/errormessage.jsp" /><%
             return;
         }
+        // Allow errors in author mode to display in the usual inline method
     } else {
         slingResponse.setStatus(status);
         final String path = errorPageHandlerService.findErrorPage(slingRequest, resource);
