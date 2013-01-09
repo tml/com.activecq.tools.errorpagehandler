@@ -31,9 +31,9 @@ public interface ErrorPageHandlerService {
     public String findErrorPage(SlingHttpServletRequest request, Resource errorResource);
     public int getStatusCode(SlingHttpServletRequest request);
     public String getErrorPageName(SlingHttpServletRequest request);
-    public String getSystemErrorPagePath();
-    public String getErrorPagesPath(String path);
-    public String getErrorPageExtension();
+    //public String getSystemErrorPagePath();
+    //public String getErrorPagesPath(String path);
+    //public String getErrorPageExtension();
     public boolean isEnabled();
 
     public boolean isAuthorModeRequest(SlingHttpServletRequest request);

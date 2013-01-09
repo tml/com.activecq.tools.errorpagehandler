@@ -21,28 +21,18 @@ import com.day.cq.commons.PathInfo;
 import com.day.cq.search.PredicateGroup;
 import com.day.cq.search.Query;
 import com.day.cq.search.QueryBuilder;
+import com.day.cq.search.eval.JcrPropertyPredicateEvaluator;
+import com.day.cq.search.eval.NodenamePredicateEvaluator;
+import com.day.cq.search.eval.TypePredicateEvaluator;
+import com.day.cq.search.result.Hit;
 import com.day.cq.search.result.SearchResult;
 import com.day.cq.wcm.api.WCMMode;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.logging.Level;
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.servlet.ServletException;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.jackrabbit.JcrConstants;
 import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -50,12 +40,22 @@ import org.apache.sling.api.request.RequestProgressTracker;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceUtil;
+import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.engine.auth.Authenticator;
 import org.apache.sling.engine.auth.NoAuthenticationHandlerException;
 import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.servlet.ServletException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.*;
 
 /**
  *
@@ -80,6 +80,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     private static final String MOZILLA = "Mozilla";
     private static final String OPERA = "Opera";
     public static final String DEFAULT_ERROR_PAGE_NAME = "errors";
+    public static final String ERROR_PAGE_PROPERTY = "errorPages";
 
     /* Enable/Disable */
     private static final boolean DEFAULT_ENABLED = true;
@@ -148,9 +149,11 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         // Try to find the closest real parent for the requested resource
         final Resource parent = findFirstRealParentOrSelf(errorResource);
 
-        if (!this.pathMap.isEmpty()) {
+        final SortedMap<String, String> errorPagesMap = getErrorPagesMap(resourceResolver);
+
+        if (!errorPagesMap.isEmpty()) {
             // Get the best-matching Errors Path for this particular Request
-            final String errorsPath = this.getErrorPagesPath(parent);
+            final String errorsPath = this.getErrorPagesPath(parent, errorPagesMap);
 
             if(StringUtils.isNotBlank(errorsPath)) {
                 // Search for CQ Page for specific servlet named Page (404, 500, Throwable, etc.)
@@ -174,12 +177,12 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         if (page == null || ResourceUtil.isNonExistingResource(page)) {
             // If no error page could be found
             if (this.hasSystemErrorPage()) {
-                final String errorPage = applyExtenion(this.getSystemErrorPagePath());
+                final String errorPage = applyExtension(this.getSystemErrorPagePath());
                 log.debug("Using default error page: {}", errorPage);
                 return StringUtils.stripToNull(errorPage);
             }
         } else {
-            final String errorPage = applyExtenion(page.getPath());
+            final String errorPage = applyExtension(page.getPath());
             log.debug("Using resolved error page: {}", errorPage);
             return StringUtils.stripToNull(errorPage);
         }
@@ -191,7 +194,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     /**
      * Create the query for finding candidate cq:Pages
      *
-     * @param searchResource
+     * @param resourceResolver
      * @param pageNames
      * @return
      */
@@ -201,14 +204,14 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         if(pageNames == null) { pageNames = new String[]{}; }
 
         // Construct query builder query
-        map.put("type", "cq:Page");
+        map.put(TypePredicateEvaluator.TYPE, "cq:Page");
 
         if(pageNames.length == 1) {
-            map.put("nodename", escapeNodeName(pageNames[0]));
+            map.put(NodenamePredicateEvaluator.NODENAME, escapeNodeName(pageNames[0]));
         } else if(pageNames.length > 1) {
             map.put("group.p.or", "true");
             for(int i = 0; i < pageNames.length; i++) {
-                map.put("group." + String.valueOf(i) + "_nodename", escapeNodeName(pageNames[i]));
+                map.put("group." + String.valueOf(i) + "_" + NodenamePredicateEvaluator.NODENAME, escapeNodeName(pageNames[i]));
             }
         }
 
@@ -275,7 +278,6 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      * @param request
      * @return
      */
-    @Override
     public int getStatusCode(SlingHttpServletRequest request) {
         Integer statusCode = (Integer) request.getAttribute(ErrorPageHandlerService.STATUS_CODE);
 
@@ -286,7 +288,12 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         }
     }
 
-    @Override
+    /**
+     *
+     *
+     * @param request
+     * @return
+     */
     public String getErrorPageName(SlingHttpServletRequest request) {
         // Get status code from request
         // Set the servlet name ot find to statusCode; update later if needed
@@ -299,11 +306,9 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
 
         try {
             final PathInfo pathInfo = new PathInfo(servletPath);
-            if(pathInfo != null) {
-                final String[] parts = StringUtils.split(pathInfo.getResourcePath(), '/');
-                if (parts.length > 0) {
-                    servletName = parts[parts.length - 1];
-                }
+            final String[] parts = StringUtils.split(pathInfo.getResourcePath(), '/');
+            if (parts.length > 0) {
+                servletName = parts[parts.length - 1];
             }
         } catch(IllegalArgumentException ex) {
             // Use status code
@@ -313,9 +318,45 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     }
 
 
+    private SortedMap<String, String> getErrorPagesMap(ResourceResolver resourceResolver) {
+        final Session session = resourceResolver.adaptTo(Session.class);
+        Map<String, String> map = new HashMap<String, String>();
+        SortedMap<String, String> authoredMap =  new TreeMap<String, String>(new StringLengthComparator());
+
+        // Construct query builder query
+        map.put(TypePredicateEvaluator.TYPE, "cq:Page");
+        map.put(JcrPropertyPredicateEvaluator.PROPERTY, JcrConstants.JCR_CONTENT + "/" + ERROR_PAGE_PROPERTY);
+        map.put(JcrPropertyPredicateEvaluator.PROPERTY + "." + JcrPropertyPredicateEvaluator.OPERATION, JcrPropertyPredicateEvaluator.OP_EXISTS);
+        map.put("p.limit", "0");
+
+        final Query query = queryBuilder.createQuery(PredicateGroup.create(map), session);
+
+        for(final Hit hit : query.getResult().getHits()) {
+            try {
+                final Resource contentResource = hit.getResource().getChild(JcrConstants.JCR_CONTENT);
+                final ValueMap properties = contentResource.adaptTo(ValueMap.class);
+                final String errorPagePath = properties.get(ERROR_PAGE_PROPERTY, String.class);
+
+                if(StringUtils.isBlank(errorPagePath)) { continue; }
+
+                final Resource errorPageResource = resourceResolver.resolve(errorPagePath);
+                if(errorPageResource != null && !ResourceUtil.isNonExistingResource(errorPageResource)) {
+                    authoredMap.put(hit.getPath(), errorPagePath);
+                }
+            } catch (RepositoryException ex) {
+                log.error("Could not resolve hit to a valid resource");
+            }
+        }
+
+        return mergeMaps(authoredMap, this.pathMap);
+    }
+
     /** OSGi Component Property Getters/Setters **/
 
-    @Override
+    /**
+     *
+     * @return
+     */
     public boolean isEnabled() {
         return enabled;
     }
@@ -333,7 +374,6 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      * Get the configured System Error Page Path
      * @return
      */
-    @Override
     public String getSystemErrorPagePath() {
         return StringUtils.strip(this.systemErrorPagePath);
     }
@@ -343,7 +383,6 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      *
      * @return
      */
-    @Override
     public String getErrorPageExtension() {
         return StringUtils.stripToEmpty(this.errorPageExtension);
     }
@@ -353,20 +392,20 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      *
      * @return
      */
-    private List<String> getRootPaths() {
-        return Arrays.asList(this.pathMap.keySet().toArray(new String[this.pathMap.size()]));
+    private List<String> getRootPaths(Map<String, String> errorPagesMap) {
+        return Arrays.asList(errorPagesMap.keySet().toArray(new String[errorPagesMap.size()]));
     }
 
     /**
      * Gets the Error Pages Path for the provided content root path
      *
      * @param rootPath
+     * @param errorPagesMap
      * @return
      */
-    @Override
-    public String getErrorPagesPath(String rootPath) {
-        if(this.pathMap.containsKey(rootPath)) {
-            return this.pathMap.get(rootPath);
+    public String getErrorPagesPath(String rootPath, Map<String, String> errorPagesMap) {
+        if(errorPagesMap.containsKey(rootPath)) {
+            return errorPagesMap.get(rootPath);
         } else {
             return null;
         }
@@ -374,19 +413,20 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
 
     /**
      * Find the Error page search path that best contains the provided resource
-     * @param path
+     *
+     * @param resource
      * @return
      */
-    private String getErrorPagesPath(Resource resource) {
+    private String getErrorPagesPath(Resource resource, SortedMap<String, String> errorPagesMap) {
         // Path to evaluate against Root paths
         final String path = resource.getPath();
+        final ResourceResolver resourceResolver = resource.getResourceResolver();
 
-        for(String rootPath : this.getRootPaths()) {
+        for(final String rootPath : this.getRootPaths(errorPagesMap)) {
             if(StringUtils.equals(path, rootPath) ||
                     StringUtils.startsWith(path, rootPath.concat("/"))) {
 
-                final ResourceResolver resourceResolver = resource.getResourceResolver();
-                final String errorPagePath = getErrorPagesPath(rootPath);
+                final String errorPagePath = getErrorPagesPath(rootPath, errorPagesMap);
 
                 Resource errorPageResource = getResource(resourceResolver, errorPagePath);
                 if(errorPageResource != null && !ResourceUtil.isNonExistingResource(errorPageResource)) {
@@ -396,7 +436,6 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         }
         return null;
     }
-
 
     /**
      * Given the Request path, find the first Real Parent of the Request (even if the resource doesnt exist)
@@ -416,9 +455,9 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
             // continue
         }
 
-        ResourceResolver resourceResolver = resource.getResourceResolver();
-        String path = resource.getPath();
-        PathInfo pathInfo = new PathInfo(path);
+        final ResourceResolver resourceResolver = resource.getResourceResolver();
+        final String path = resource.getPath();
+        final PathInfo pathInfo = new PathInfo(path);
         String[] parts = StringUtils.split(pathInfo.getResourcePath(), '/');
 
         for (int i = parts.length - 1; i >= 0; i--) {
@@ -443,9 +482,9 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      * @param path
      * @return
      */
-    private String applyExtenion(String path) {
+    private String applyExtension(String path) {
         if (path == null) {
-            return path;
+            return null;
         }
 
         String ext = getErrorPageExtension();
@@ -489,6 +528,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     /** Script Support Methods **/
 
     /**
+     * Determins if the request has been authenticated or is Anonymous
      *
      * @param request
      * @return
@@ -498,6 +538,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     }
 
     /**
+     * Determines if the request originated from a Browser
      *
      * @param request
      * @return
@@ -516,7 +557,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     @Override
     public boolean isAuthorModeRequest(SlingHttpServletRequest request) {
         final WCMMode mode = WCMMode.fromRequest(request);
-        return (mode != WCMMode.DISABLED);
+        return (mode != null && mode != WCMMode.DISABLED);
     }
 
     /**
@@ -531,6 +572,12 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return (mode == WCMMode.PREVIEW);
     }
 
+    /**
+     * Attempts to invoke a valid Sling Authentication Handler for the request
+     *
+     * @param request
+     * @param response
+     */
     protected void authenticateRequest(SlingHttpServletRequest request, SlingHttpServletResponse response) {
         if (authenticator == null) {
             log.warn("Cannot login: Missing Authenticator service");
@@ -564,7 +611,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     }
 
     /**
-     * Returns the Exception Message from the Request
+     * Returns the Exception Message (Stacktrace) from the Request
      *
      * @param request
      * @return
@@ -598,6 +645,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     }
 
     /**
+     * Returns a String representation of the RequestProgress trace
      *
      * @param request
      * @return
@@ -610,6 +658,36 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
             tracker.dump(new PrintWriter(stringWriter, true));
         }
         return stringWriter.toString();
+    }
+
+    /**
+     * Merge two Maps together. In the event of any key collisions the Master map wins
+     *
+     * Any blank value keys are dropped from the final Map
+     *
+     * Map is sorted by value (String) length
+     *
+     * @param master
+     * @param slave
+     * @return
+     */
+    private SortedMap<String, String> mergeMaps(SortedMap<String, String> master, SortedMap<String, String> slave) {
+        SortedMap<String, String>map = new TreeMap<String, String>(new StringLengthComparator());
+
+        for(final String key : master.keySet()) {
+            if(StringUtils.isNotBlank(master.get(key))) {
+                map.put(key, master.get(key));
+            }
+        }
+
+        for(final String key : slave.keySet()) {
+            if(master.containsKey(key)) { continue; }
+            if(StringUtils.isNotBlank(slave.get(key))) {
+                map.put(key, slave.get(key));
+            }
+        }
+
+        return map;
     }
 
 
