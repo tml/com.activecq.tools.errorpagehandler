@@ -7,7 +7,7 @@
     <errorPages
             jcr:primaryType="cq:Widget"
             fieldLabel="Error Pages"
-            fieldDescription="Specify the error page tree to use for handling errors that occur on this page or sub-pages."
+            fieldDescription="Error pages for this content tree"
             name="./errorPages"
             xtype="pathfield"
             />
