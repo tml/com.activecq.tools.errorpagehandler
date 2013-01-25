@@ -8,7 +8,19 @@ final String stackTrace = errorPageHandlerService.getException(slingRequest);
 final String requestProgress = errorPageHandlerService.getRequestProgress(slingRequest);
 final String path = errorPageHandlerService.findErrorPage(slingRequest, resource);
 
-%><style><%@include file="errorpagehandler.css" %></style>
+// Clear the response
+slingResponse.reset();
+
+%>
+<html>
+<head>
+    <title>Adobe CQ - Error Page</title>
+    <style>
+        <%@include file="css/normalize.css" %>
+        <%@include file="css/errorpagehandler.css" %>
+    </style>
+</head>
+<body>
 <div id="acq-eph">
     <div class="acq-eph-message">
         <h1>ATTENTION</h1>
@@ -29,18 +41,19 @@ final String path = errorPageHandlerService.findErrorPage(slingRequest, resource
     <div class="acq-eph-body">
         <div class="acq-eph-section acq-eph-collapsed" id="acq-eph-error-message">
             <h2>Error Message</h2>
-            <a href="#acq-eph-error-message" class="acq-eph-toggle" data-collapse-text="Collpase error message" data-expand-text="Expand error message">Expand error message</a>
+            <a href="#acq-eph-error-message" class="acq-eph-toggle" data-collapse-text="Collapse error message" data-expand-text="Expand error message">Expand error message</a>
             <pre><%= stackTrace %></pre>
         </div>
 
         <div class="acq-eph-section acq-eph-collapsed" id="acq-eph-request-progress">
             <h2>Request Progress</h2>
-            <a href="#acq-eph-request-progress" class="acq-eph-toggle" data-collapse-text="Collpase request progress" data-expand-text="Expand request progress">Expand request progress</a>
+            <a href="#acq-eph-request-progress" class="acq-eph-toggle" data-collapse-text="Collapse request progress" data-expand-text="Expand request progress">Expand request progress</a>
             <pre><%= requestProgress %></pre>
         </div>
     </div>
 
 </div>
-<script><%@include file="errorpagehandler.js" %></script>
+<script><%@include file="js/jquery.min.js" %></script>
+<script><%@include file="js/errorpagehandler.js" %></script>
 </body>
 </html>

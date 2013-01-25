@@ -1,6 +1,6 @@
-;$CQ(function() {
-    $CQ('#acq-eph .acq-eph-toggle').click(function() {
-        $this = $CQ(this);
+;$(function() {
+    $('#acq-eph .acq-eph-toggle').click(function() {
+        $this = $(this);
         $section = $this.closest('.acq-eph-section');
 
         if($section.hasClass('acq-eph-collapsed')) {
