@@ -30,7 +30,7 @@ slingResponse.reset();
         </p>
 
         <p>
-            In the Publish environment, this error-ing page will render using the error page: <a href="<%= path %>" target="_blank"><%= path %></a>
+            In the Publish environment, this erroring page will render using the error page: <a href="<%= path %>" target="_blank"><%= path %></a>
         </p>
 
         <p>
