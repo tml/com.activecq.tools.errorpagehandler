@@ -1,4 +1,5 @@
 <%@page session="false"
+        buffer="512kb"
         import="com.activecq.tools.errorpagehandler.ErrorPageHandlerService"%><%
 %><%@include file="/libs/foundation/global.jsp" %><%
 ErrorPageHandlerService errorPageHandlerService = sling.getService(ErrorPageHandlerService.class);
@@ -19,6 +20,7 @@ if(errorPageHandlerService != null && errorPageHandlerService.isEnabled()) {
         final String path = errorPageHandlerService.findErrorPage(slingRequest, resource);
 
         if(path != null) {
+            errorPageHandlerService.resetRequestAndResponse(slingRequest, slingResponse, status);
             sling.include(path);
             return;
         }

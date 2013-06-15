@@ -15,7 +15,6 @@
  */
 package com.activecq.tools.errorpagehandler.impl;
 
-import com.activecq.api.utils.OsgiPropertyUtil;
 import com.activecq.tools.errorpagehandler.ErrorPageHandlerService;
 import com.day.cq.commons.PathInfo;
 import com.day.cq.search.PredicateGroup;
@@ -33,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.*;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.jackrabbit.JcrConstants;
+import org.apache.jackrabbit.util.ISO9075;
 import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -54,8 +54,8 @@ import javax.jcr.Session;
 import javax.servlet.ServletException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
 
 /**
  *
@@ -508,20 +508,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
             return "";
         }
 
-        char c = name.charAt(0);
-
-        try {
-            Integer.parseInt(String.valueOf(c));
-            if (name.length() >= 2) {
-                return "_x003" + c + "_" + StringUtils.substring(name, 1);
-            } else {
-                return "_x003" + c + "_";
-            }
-        } catch (NumberFormatException ex) {
-            // DO NOTHING; not an int
-        }
-
-        return name;
+        return ISO9075.encode(name);
     }
 
 
@@ -557,7 +544,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     @Override
     public boolean isAuthorModeRequest(SlingHttpServletRequest request) {
         final WCMMode mode = WCMMode.fromRequest(request);
-        return (mode != null && mode != WCMMode.DISABLED);
+        return (mode != null && !WCMMode.DISABLED.equals(mode));
     }
 
     /**
@@ -569,7 +556,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     @Override
     public boolean isAuthorPreviewModeRequest(SlingHttpServletRequest request) {
         final WCMMode mode = WCMMode.fromRequest(request);
-        return (mode == WCMMode.PREVIEW);
+        return WCMMode.PREVIEW.equals(mode);
     }
 
     /**
@@ -660,6 +647,16 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return stringWriter.toString();
     }
 
+    @Override
+    public void resetRequestAndResponse(SlingHttpServletRequest request, SlingHttpServletResponse response, int statusCode) {
+        // Clear client libraries
+        request.setAttribute(com.day.cq.widget.HtmlLibraryManager.class.getName() + ".included",
+                new java.util.HashSet<String>());
+        // Clear the response
+        response.reset();
+        response.setStatus(statusCode);
+    }
+
     /**
      * Merge two Maps together. In the event of any key collisions the Master map wins
      *
@@ -690,13 +687,36 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return map;
     }
 
+    /**
+     * Util for parsing Service properties in the form &gt;value&lt;&gt;separator&lt;&gt;value&lt;
+     *
+     * @param value
+     * @param separator
+     * @return
+     */
+    private AbstractMap.SimpleEntry toSimpleEntry(String value, String separator) {
+        String[] tmp = StringUtils.split(value, separator);
+
+        if (tmp == null) {
+            return null;
+        }
+
+        if (tmp.length == 2) {
+            return new AbstractMap.SimpleEntry(tmp[0], tmp[1]);
+        } else {
+            return null;
+        }
+    }
+
 
     /** OSGi Component Methods **/
 
+    @Activate
     protected void activate(ComponentContext componentContext) {
         configure(componentContext);
     }
 
+    @Deactivate
     protected void deactivate(ComponentContext componentContext) {
         enabled = false;
     }
@@ -727,7 +747,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         for (String path : paths) {
             if(StringUtils.isBlank(path)) { continue; }
 
-            final SimpleEntry tmp = OsgiPropertyUtil.toSimpleEntry(path, ":");
+            final SimpleEntry tmp = toSimpleEntry(path, ":");
 
             if(tmp == null) { continue; }
 

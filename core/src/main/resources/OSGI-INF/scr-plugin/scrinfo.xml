@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<components xmlns:scr="http://www.osgi.org/xmlns/scr/v1.0.0">
-    <scr:component enabled="true" immediate="false" name="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl">
+<components xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0">
+    <scr:component enabled="true" immediate="false" name="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl" activate="activate" deactivate="deactivate">
         <implementation class="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl"/>
         <service servicefactory="false">
             <provide interface="com.activecq.tools.errorpagehandler.ErrorPageHandlerService"/>

@@ -1,17 +1,26 @@
 ;$(function() {
-    $('#error-page-handler .error-page-handler-toggle').click(function() {
+    $('#error-page-handler .toggle').click(function() {
         $this = $(this);
-        $section = $this.closest('.error-page-handler-section');
+        $section = $this.closest('.section');
 
-        if($section.hasClass('error-page-handler-collapsed')) {
-            $section.removeClass('error-page-handler-collapsed');
-            $section.addClass('error-page-handler-expanded')
+        if($section.hasClass('collapsed')) {
+            $section.removeClass('collapsed');
+            $section.addClass('expanded')
             $this.text($this.data('collapse-text'));
         } else {
-            $section.removeClass('error-page-handler-expanded')
-            $section.addClass('error-page-handler-collapsed');
+            $section.removeClass('expanded')
+            $section.addClass('collapsed');
             $this.text($this.data('expand-text'));
         }
     });
-});
 
+    $('#error-page-handler .edit-mode').click(function () {
+        CQ.WCM.setMode(CQ.WCM.MODE_EDIT);
+        return true;
+    });
+
+    $('#error-page-handler .edit-error-page').click(function () {
+        CQ.WCM.setMode(CQ.WCM.MODE_EDIT);
+        return true;
+    });
+});

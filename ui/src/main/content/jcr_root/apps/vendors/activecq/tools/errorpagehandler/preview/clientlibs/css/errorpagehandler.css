@@ -1,86 +1,41 @@
-body {
-    background-color: #fff;
-    background-image: none;
-    margin: 0;
-    padding: 0;
-    font-size: 13px;
-}
-
-#acq-eph {
-    background-color: #fff;
-    color: #000;
-    font-family: Arial, sans-serif;
+#error-page-handler {
     margin: 0 auto;
     width: 80%;
 }
 
-#acq-eph .acq-eph-body {
-    background-color: #ECECEC;
+#error-page-handler .content {
     padding: 2em;
+    background-color: #fff;
 }
 
-#acq-eph h1 {
-    color: black;
-    border-bottom: solid 1px black;
-    font-size: 32px;
-    font-weight: bold;
-    line-height: 1.5em;
-}
-
-#acq-eph h2 {
-    color: black;
-    border-bottom: dashed 1px #CCC;
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 1.5em;
-    margin-bottom: .72em;
-    padding-bottom: .25em;
-}
-
-#acq-eph .acq-eph-message {
-    background-color: #F92F42;
-    border-bottom: solid 5px #FB515B;
+#error-page-handler .message {
+    background-color: #FD6667;
+    border-bottom: solid 5px #C64340;
     color: #fff;
-    font-size: 1.25em;
     margin: 0;
     padding: 3em 2em 1em 2em;
 }
 
-#acq-eph .acq-eph-message h1 {
-    color: white;
+#error-page-handler .message h1 {
     border-bottom-color: #FB515B;
 }
 
-#acq-eph .acq-eph-message p {
-    color: white;
+#error-page-handler .message p {
     margin-bottom: 1em;
 }
 
-#acq-eph .acq-eph-message a,
-#acq-eph .acq-eph-message a:hover,
-#acq-eph .acq-eph-message a:visited {
+#error-page-handler .message a,
+#error-page-handler .message a:hover,
+#error-page-handler .message a:visited {
     color: white;
     font-weight: bold;
     text-decoration: underline;
 }
 
-#acq-eph .acq-eph-toggle {
-    border: solid 2px #ccc;
-    display: inline-block;
-    text-align: center;
-    background-color: #f7f7f7;
-    color: #666;
-    padding: .5em 1em;
-    font-weight: bold;
-}
-
-#acq-eph .acq-eph-toggle:hover {
-    background-color: #fff;
-    text-decoration: none;
-}
-
-#acq-eph pre {
+#error-page-handler pre {
     display: block;
+    font-size: 80%;
+
     white-space: pre-wrap;
     white-space: -moz-pre-wrap;
     white-space: -pre-wrap;
@@ -88,21 +43,52 @@ body {
     word-wrap: break-word;
 }
 
-#acq-eph hr {
+#error-page-handler hr {
     background-color: #000;
     border: 1px 0 0 0;
 }
 
-#acq-eph .acq-eph-collapsed {
-    height: 240px;
+#error-page-handler .collapsed {
+    height: 249px;
     overflow-y: hidden;
 }
 
-#acq-eph .acq-eph-expanded {
+#error-page-handler .expanded {
     height: auto;
     overflow-y: auto;
 }
 
-#acq-eph .acq-eph-section {
+#error-page-handler .section {
     margin-bottom: 2em;
+}
+
+@media print {
+    #error-page-handler .content-header {
+        display: none;
+    }
+
+    #error-page-handler .message,
+    #error-page-handler .message a,
+    #error-page-handler .message a:hover,
+    #error-page-handler .message a:visited {
+        color: #000;
+    }
+
+    #error-page-handler .message {
+        background-color: #fff;
+        border-bottom: solid 1px #000;
+    }
+
+    #error-page-handler .message h1 {
+        border-bottom-width: 0px;
+    }
+
+    #error-page-handler .collapsed {
+        height: auto;
+        overflow-y: auto;
+    }
+
+    #error-page-handler .toggle {
+        display: none;
+    }
 }

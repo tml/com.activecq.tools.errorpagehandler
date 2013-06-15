@@ -28,13 +28,11 @@ public interface ErrorPageHandlerService {
     public static final String SERVLET_NAME = "javax.servlet.error.servlet_name";
     public static final int DEFAULT_STATUS_CODE = 500;
 
+    public boolean isEnabled();
+
     public String findErrorPage(SlingHttpServletRequest request, Resource errorResource);
     public int getStatusCode(SlingHttpServletRequest request);
     public String getErrorPageName(SlingHttpServletRequest request);
-    //public String getSystemErrorPagePath();
-    //public String getErrorPagesPath(String path);
-    //public String getErrorPageExtension();
-    public boolean isEnabled();
 
     public boolean isAuthorModeRequest(SlingHttpServletRequest request);
     public boolean isAuthorPreviewModeRequest(SlingHttpServletRequest request);
@@ -43,4 +41,6 @@ public interface ErrorPageHandlerService {
 
     public String getException(SlingHttpServletRequest request);
     public String getRequestProgress(SlingHttpServletRequest request);
+
+    public void resetRequestAndResponse(SlingHttpServletRequest request, SlingHttpServletResponse response, int statusCode);
 }
