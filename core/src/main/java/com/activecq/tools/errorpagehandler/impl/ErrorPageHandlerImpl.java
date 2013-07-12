@@ -116,7 +116,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
     /* Search Paths */
     private static final String[] DEFAULT_SEARCH_PATHS = {};
     @Property(label = "Error page paths",
-    description = "List of valid inclusive content trees under which error pages may reside, along with the name of the the default error page for the content tree. Example: /content/geometrixx/en:errors [Optional]",
+    description = "List of valid inclusive content trees under which error pages may reside, along with the name of the the default error page for the content tree. This is a fallback/less powerful option to adding the ./errorPages property to CQ Page property dialogs. Example: /content/geometrixx/en:errors [Optional]",
     cardinality = Integer.MAX_VALUE)
     private static final String PROP_SEARCH_PATHS = "prop.paths";
 
@@ -643,6 +643,15 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         return stringWriter.toString();
     }
 
+    /**
+     * Reset response attributes to support printing out a new page (rather than one that potentially errored out).
+     * This includes clearing clientlib inclusion state, and resetting the response.
+     *
+     * If the response is committed, and it hasnt been closed by code, check the response AND jsp buffer sizes and ensure they are large enough to NOT force a buffer flush.
+     * @param request
+     * @param response
+     * @param statusCode
+     */
     @Override
     public void resetRequestAndResponse(SlingHttpServletRequest request, SlingHttpServletResponse response, int statusCode) {
         // Clear client libraries
