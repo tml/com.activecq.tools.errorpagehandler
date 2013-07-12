@@ -32,7 +32,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.*;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.jackrabbit.JcrConstants;
-import org.apache.jackrabbit.util.ISO9075;
 import org.apache.sling.api.SlingConstants;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
@@ -444,16 +443,14 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
      * @return
      */
     private Resource findFirstRealParentOrSelf(Resource resource) {
-        if(resource != null && !ResourceUtil.isNonExistingResource(resource)) {
+        if(resource == null) {
+            return null;
+        } else if(resource != null && !ResourceUtil.isNonExistingResource(resource)) {
             return resource;
         }
 
-        try {
-            final Resource parent = resource.getParent();
-            if (parent != null) { return parent; }
-        } catch (NullPointerException ex) {
-            // continue
-        }
+        final Resource parent = resource.getParent();
+        if (parent != null) { return parent; }
 
         final ResourceResolver resourceResolver = resource.getResourceResolver();
         final String path = resource.getPath();
@@ -507,8 +504,7 @@ public class ErrorPageHandlerImpl implements ErrorPageHandlerService {
         if (name == null) {
             return "";
         }
-
-        return ISO9075.encode(name);
+        return name;
     }
 
 
