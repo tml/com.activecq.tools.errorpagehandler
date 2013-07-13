@@ -5,7 +5,7 @@
         <AD id="prop.error-page.extension" type="String" default="html" name="Error page extension" description="Examples: html, htm, xml, json. [Optional] [Default: html]"/>
         <AD id="prop.error-page.fallback-name" type="String" default="500" name="Fallback error page name" description="Error page name (not path) to use if a valid Error Code/Error Servlet Name cannot be retrieved from the Request. [Required] [Default: 500]"/>
         <AD id="prop.error-page.system-path" type="String" default="" name="System error page" description="Absolute path to system Error page resource to serve if no other more appropriate error pages can be found. Does not include extension. [Optional... but highly recommended]"/>
-        <AD id="prop.paths" type="String" name="Error page paths" description="List of valid inclusive content trees under which error pages may reside, along with the name of the the default error page for the content tree. Example: /content/geometrixx/en:errors [Optional]" cardinality="2147483647"/>
+        <AD id="prop.paths" type="String" name="Error page paths" description="List of valid inclusive content trees under which error pages may reside, along with the name of the the default error page for the content tree. This is a fallback/less powerful option to adding the ./errorPages property to CQ Page property dialogs. Example: /content/geometrixx/en:errors [Optional]" cardinality="2147483647"/>
     </OCD>
     <Designate pid="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl">
         <Object ocdref="com.activecq.tools.errorpagehandler.impl.ErrorPageHandlerImpl"/>
