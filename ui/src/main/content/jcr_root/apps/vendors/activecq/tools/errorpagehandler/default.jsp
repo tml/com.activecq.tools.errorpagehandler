@@ -9,7 +9,7 @@ if(errorPageHandlerService != null && errorPageHandlerService.isEnabled()) {
 
     if(status >= 500 && errorPageHandlerService.isAuthorModeRequest(slingRequest)) {
         if(errorPageHandlerService.isAuthorPreviewModeRequest(slingRequest)) {
-            %><cq:include script="preview/errormessage.jsp" /><%
+            %><cq:include script="/apps/vendors/activecq/tools/errorpagehandler/preview/errormessage.jsp" /><%
             return;
         } else {
             // In Author and Edit or Design, so allow OOTB WCMDebugFilter to handle the error message display
