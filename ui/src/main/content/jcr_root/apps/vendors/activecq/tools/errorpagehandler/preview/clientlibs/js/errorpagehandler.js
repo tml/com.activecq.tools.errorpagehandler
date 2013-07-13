@@ -1,14 +1,14 @@
 ;$(function() {
     $('#error-page-handler .toggle').click(function() {
-        $this = $(this);
-        $section = $this.closest('.section');
+        var $this = $(this),
+            $section = $this.closest('.section');
 
         if($section.hasClass('collapsed')) {
             $section.removeClass('collapsed');
-            $section.addClass('expanded')
+            $section.addClass('expanded');
             $this.text($this.data('collapse-text'));
         } else {
-            $section.removeClass('expanded')
+            $section.removeClass('expanded');
             $section.addClass('collapsed');
             $this.text($this.data('expand-text'));
         }
