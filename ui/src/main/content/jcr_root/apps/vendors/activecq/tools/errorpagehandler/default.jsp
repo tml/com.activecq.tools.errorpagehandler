@@ -1,5 +1,4 @@
 <%@page session="false"
-        buffer="512kb"
         import="com.activecq.tools.errorpagehandler.ErrorPageHandlerService"%><%
 %><%@include file="/libs/foundation/global.jsp" %><%
 ErrorPageHandlerService errorPageHandlerService = sling.getService(ErrorPageHandlerService.class);
@@ -16,13 +15,28 @@ if(errorPageHandlerService != null && errorPageHandlerService.isEnabled()) {
             return;
         }
     } else {
-        slingResponse.setStatus(status);
         final String path = errorPageHandlerService.findErrorPage(slingRequest, resource);
 
-        if(path != null) {
-            errorPageHandlerService.resetRequestAndResponse(slingRequest, slingResponse, status);
-            sling.include(path);
+        if(response.isCommitted()) {
+            log.error("Unable to serve user a valid 500 error page due to a committed response: " + slingRequest.getRequestURL());
+
+            // Hack to handle committed response; meta-refresh to the error page.
+            // Try to close any potential open tags first, especially script tags.
+            // Mark-up will be mangled; however Response will return with a 500 (non-caching error code)
+            String metaRedirect = "/></script>";
+            metaRedirect += "<meta http-equiv=\"refresh\" content=\"0; url=" + path + "/\">";
+
+            out.print(metaRedirect);
+            out.flush();
             return;
+        } else {
+            slingResponse.setStatus(status);
+
+            if(path != null) {
+                errorPageHandlerService.resetRequestAndResponse(slingRequest, slingResponse, status);
+                sling.include(path);
+                return;
+            }
         }
     }
 }
